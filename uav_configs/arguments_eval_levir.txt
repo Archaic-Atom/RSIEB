@@ -1,0 +1,16 @@
+--model_name iebins_nyu
+--encoder large07
+--dataset nyu
+--input_height 512
+--input_width 512
+--min_depth 55
+--max_depth 137
+
+--data_path_eval /data1/zhouhongwei/depth_datasets
+--gt_path_eval /data1/zhouhongwei/depth_datasets
+--filenames_file_eval uav_data_splits/LEVIR_med_testing_list.txt
+--min_depth_eval 80
+--max_depth_eval 137
+
+
+--checkpoint_path /data1/zhouhongwei/exper/models/1205/iebins_whu_omvs/model-38400-best_abs_rel_0.02146

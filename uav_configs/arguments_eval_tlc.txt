@@ -1,0 +1,15 @@
+--model_name iebins_tlc
+--encoder large07
+--dataset tlc
+--input_height 384
+--input_width 768
+--max_depth 530000
+
+--data_path_eval /data1/zhouhongwei/depth_datasets
+--gt_path_eval /data1/zhouhongwei/depth_datasets
+--filenames_file_eval uav_data_splits/whu_tlc_testing_list.txt
+--min_depth_eval 1e-3
+--max_depth_eval 530000
+
+
+--checkpoint_path /data1/zhouhongwei/exper/models/tlc/model-23000-best_silog_0.00999
