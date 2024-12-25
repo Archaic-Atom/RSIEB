@@ -104,7 +104,7 @@ from dataloaders.whu_dataloader import NewDataLoader
 
 
 def online_eval(model, dataloader_eval, gpu, epoch, ngpus, group, post_process=False):
-    eval_measures = torch.zeros(10).cuda(device=gpu)
+    eval_measures = torch.zeros(13).cuda(device=gpu)
     for _, eval_sample_batched in enumerate(tqdm(dataloader_eval.data)):
         with torch.no_grad():
             image = torch.autograd.Variable(eval_sample_batched['image'].cuda(gpu, non_blocking=True))
@@ -135,8 +135,8 @@ def online_eval(model, dataloader_eval, gpu, epoch, ngpus, group, post_process=F
         # print("pred",pred_depth[valid_mask])
         measures = compute_errors(gt_depth[valid_mask], pred_depth[valid_mask])
 
-        eval_measures[:9] += torch.tensor(measures).cuda(device=gpu)
-        eval_measures[9] += 1
+        eval_measures[:12] += torch.tensor(measures).cuda(device=gpu)
+        eval_measures[12] += 1
 
     if args.multiprocessing_distributed:
         # group = dist.new_group([i for i in range(ngpus)])    #为什么注释，加到后面去了，这句话作用是什么
@@ -144,15 +144,15 @@ def online_eval(model, dataloader_eval, gpu, epoch, ngpus, group, post_process=F
 
     if not args.multiprocessing_distributed or gpu == 0:
         eval_measures_cpu = eval_measures.cpu()
-        cnt = eval_measures_cpu[9].item()
+        cnt = eval_measures_cpu[12].item()
         eval_measures_cpu /= cnt
         print('Computing errors for {} eval samples'.format(int(cnt)), ', post_process: ', post_process)
-        print("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}".format('silog', 'abs_rel', 'log10', 'rms',
+        print("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}".format('silog', 'abs_rel', 'log10', 'rms',
                                                                                      'sq_rel', 'log_rms', 'd1', 'd2',
-                                                                                     'd3'))
-        for i in range(8):
+                                                                                     'd3','d1_new','d2_new','d3_new'))
+        for i in range(11):
             print('{:7.4f}, '.format(eval_measures_cpu[i]), end='')
-        print('{:7.4f}'.format(eval_measures_cpu[8]))
+        print('{:7.4f}'.format(eval_measures_cpu[11]))
         return eval_measures_cpu
 
     return None
@@ -352,11 +352,11 @@ def main_worker(gpu, ngpus_per_node, args):
                     with open(log_txt, 'a') as txtfile:
                         txtfile.write(
                             ">>>>>>>>>>>>>>>>>>>>>>>>>Step:%d>>>>>>>>>>>>>>>>>>>>>>>>>\n" % (int(global_step)))
-                        txtfile.write("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}\n".format('silog',
-                                        'abs_rel','log10','rms','sq_rel','log_rms','d1','d2','d3'))
+                        txtfile.write("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}\n".format('silog',
+                                        'abs_rel','log10','rms','sq_rel','log_rms','d1','d2','d3','d1_new','d2_new','d3_new'))
                         txtfile.write("depth estimation\n")
                         line = ''
-                        for i in range(9):
+                        for i in range(12):
                             line += '{:7.4f}, '.format(eval_measures[i])
                         txtfile.write(line + '\n')  # 356-367额外添加
 

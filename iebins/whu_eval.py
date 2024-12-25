@@ -9,7 +9,7 @@ from tqdm import tqdm
 from utils import post_process_depth, flip_lr, compute_errors
 from networks.NewCRFDepth import NewCRFDepth
 
-from dataloaders.whu_mvs_dataloader import NewDataLoader
+from dataloaders.whu_dataloader import NewDataLoader
 
 def convert_arg_line_to_args(arg_line):
     for arg in arg_line.split():
@@ -59,7 +59,7 @@ else:
 
 
 def eval(model, dataloader_eval, post_process=False):
-    eval_measures = torch.zeros(10).cuda()
+    eval_measures = torch.zeros(13).cuda()
 
     for _, eval_sample_batched in enumerate(tqdm(dataloader_eval.data)):
         with torch.no_grad():
@@ -85,28 +85,26 @@ def eval(model, dataloader_eval, post_process=False):
         pred_depth[np.isinf(pred_depth)] = args.max_depth_eval
         pred_depth[np.isnan(pred_depth)] = args.min_depth_eval
 
-        print("pred_depth--", pred_depth)
-        print("gt_path",gt_depth)
+
 
         valid_mask = np.logical_and(gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval)
 
-        print("gt",gt_depth[valid_mask])
-        print("pred",pred_depth[valid_mask])
+
         measures = compute_errors(gt_depth[valid_mask], pred_depth[valid_mask])
 
-        eval_measures[:9] += torch.tensor(measures).cuda()
-        eval_measures[9] += 1
+        eval_measures[:12] += torch.tensor(measures).cuda()
+        eval_measures[12] += 1
 
     eval_measures_cpu = eval_measures.cpu()
-    cnt = eval_measures_cpu[9].item()
+    cnt = eval_measures_cpu[12].item()
     eval_measures_cpu /= cnt
     print('Computing errors for {} eval samples'.format(int(cnt)), ', post_process: ', post_process)
-    print("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}".format('silog', 'abs_rel', 'log10', 'rms',
+    print("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}".format('silog', 'abs_rel', 'log10', 'rms',
                                                                                  'sq_rel', 'log_rms', 'd1', 'd2',
-                                                                                 'd3'))
-    for i in range(8):
+                                                                                 'd3','d1_new','d2_new','d3_new'))
+    for i in range(11):
         print('{:7.4f}, '.format(eval_measures_cpu[i]), end='')
-    print('{:7.4f}'.format(eval_measures_cpu[8]))
+    print('{:7.4f}'.format(eval_measures_cpu[11]))
     return eval_measures_cpu
 
 

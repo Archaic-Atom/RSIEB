@@ -73,16 +73,21 @@ inv_normalize = transforms.Normalize(
 )
 
 
-eval_metrics = ['silog', 'abs_rel', 'log10', 'rms', 'sq_rel', 'log_rms', 'd1', 'd2', 'd3']
+eval_metrics = ['silog', 'abs_rel', 'log10', 'rms', 'sq_rel', 'log_rms', 'd1', 'd2', 'd3','d1_new','d2_new','d3_new']
+
 
 
 def compute_errors(gt, pred):
-    # print("-----------gt",gt)
-    # print("-------------pred",pred)
+
+    
 
     thresh = np.maximum((gt / pred), (pred / gt))
-    
-    #print('Hello', thresh)
+
+    # print(thresh)
+
+    d1_new = (thresh < 1.025).mean()
+    d2_new = (thresh < 1.025 ** 2).mean()
+    d3_new = (thresh < 1.025 ** 3).mean()
 
     d1 = (thresh < 1.25).mean()
     d2 = (thresh < 1.25 ** 2).mean()
@@ -103,30 +108,9 @@ def compute_errors(gt, pred):
     err = np.abs(np.log10(pred) - np.log10(gt))
     log10 = np.mean(err)
 
-    return [silog, abs_rel, log10, rms, sq_rel, log_rms, d1, d2, d3]
+    return [silog, abs_rel, log10, rms, sq_rel, log_rms, d1, d2, d3, d1_new, d2_new, d3_new]
 
-def compute_errors_pth(gt, pred):
-    thresh = torch.maximum((gt / pred), (pred / gt))
-    d1 = (thresh < 1.25).float().mean()
-    d2 = (thresh < 1.25 ** 2).float().mean()
-    d3 = (thresh < 1.25 ** 3).float().mean()
 
-    rms = (gt - pred) ** 2
-    rms = torch.sqrt(rms.mean())
-
-    log_rms = (torch.log(gt) - torch.log(pred)) ** 2
-    log_rms = torch.sqrt(log_rms.mean())
-
-    abs_rel = torch.mean(torch.abs(gt - pred) / gt)
-    sq_rel = torch.mean(((gt - pred) ** 2) / gt)
-
-    err = torch.log(pred) - torch.log(gt)
-    silog = torch.sqrt(torch.mean(err ** 2) - torch.mean(err) ** 2) * 100
-
-    err = torch.abs(torch.log10(pred) - torch.log10(gt))
-    log10 = torch.mean(err)
-
-    return [silog, abs_rel, log10, rms, sq_rel, log_rms, d1, d2, d3]
 
 class silog_loss(nn.Module):
     def __init__(self, variance_focus):

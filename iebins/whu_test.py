@@ -116,13 +116,13 @@ def test(params):
     if not os.path.exists(save_name):
         try:
             os.mkdir(save_name)
-            os.mkdir(save_name + '/raw')
+            os.mkdir(save_name + '/1')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
     for s in tqdm(range(num_test_samples)):
-        filename_pred_png = save_name + '/raw/' +lines[s].split()[0].split('/')[-1]
+        filename_pred_png = save_name + '/1/' +lines[s].split()[0].split('/')[-1]
         #print(filename_pred_png)
         pred_depth = pred_depths[s]
         pred_depth_scaled = pred_depth

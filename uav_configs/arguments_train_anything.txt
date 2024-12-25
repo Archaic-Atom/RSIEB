@@ -1,0 +1,34 @@
+--mode train
+--model_name whu_anything
+--encoder vits
+--pretrain /data1/zhouhongwei/Depth_Anything_V2/model_zoo/depth_anything_v2_vits.pth
+--dataset uav
+--data_path /data1/zhouhongwei/depth_datasets
+--gt_path /data1/zhouhongwei/depth_datasets
+--filenames_file uav_data_splits/whu_any_test_list.txt
+--batch_size 1
+--num_epochs 50
+--learning_rate 2e-5
+--weight_decay 1e-2
+--adam_eps 1e-3
+--num_threads 1
+--input_height 384
+--input_width 768
+--min_depth 175
+--max_depth 350
+--do_random_rotate
+--degree 2.5
+--log_directory /data1/zhouhongwei/exper/models/anything_whu
+--multiprocessing_distributed
+--dist_url tcp://127.0.0.1:2345
+
+--log_freq 100
+--do_online_eval
+--eval_freq 1000
+--data_path_eval /data1/zhouhongwei/depth_datasets
+--gt_path_eval /data1/zhouhongwei/depth_datasets
+--filenames_file_eval uav_data_splits/whu_any_test_list.txt
+--min_depth_eval 1e-3
+--max_depth_eval 350
+--eigen_crop
+

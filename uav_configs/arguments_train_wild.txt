@@ -1,33 +1,33 @@
 --mode train
---model_name iebins_whu
+--model_name iebins_wild
 --encoder large07
 --pretrain /data1/zhouhongwei/my_IEBins/IEBins/model_zoo/swin_transformer/swin_large_patch4_window7_224_22k.pth
 --dataset uav
 --data_path /data1/zhouhongwei/depth_datasets
 --gt_path /data1/zhouhongwei/depth_datasets
---filenames_file uav_data_splits/wild_training_list.txt
---batch_size 6
+--filenames_file uav_data_splits/filtered_wild_crop_training_list.txt
+--batch_size 1
 --num_epochs 50
 --learning_rate 2e-5
 --weight_decay 1e-2
 --adam_eps 1e-3
 --num_threads 1
---input_height 3956
---input_width 5280
---max_depth 40
+--input_height 384
+--input_width 768
+--max_depth 210
 --do_random_rotate
 --degree 2.5
---log_directory /data1/zhouhongwei/exper/models
+--log_directory /data1/zhouhongwei/exper/models/iebins_wild
 --multiprocessing_distributed
---dist_url tcp://127.0.0.1:2345
+
 
 --log_freq 100
 --do_online_eval
---eval_freq 200
+--eval_freq 1000
 --data_path_eval /data1/zhouhongwei/depth_datasets
 --gt_path_eval /data1/zhouhongwei/depth_datasets
---filenames_file_eval uav_data_splits/wild_testing_list.txt
+--filenames_file_eval uav_data_splits/filtered_wild_crop_testing_list.txt
 --min_depth_eval 1e-3
---max_depth_eval 40
+--max_depth_eval 210
 --eigen_crop
 

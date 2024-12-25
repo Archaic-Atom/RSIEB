@@ -92,17 +92,21 @@ class DataLoadPreprocess(Dataset):
 
             image_path = os.path.join(self.args.data_path, rgb_file)
             depth_path = os.path.join(self.args.gt_path, depth_file)
-            print("ok-----------")
-            image = Image.open(image_path)
-            # depth_gt = Image.open(depth_path)
 
+            image = Image.open(image_path)
             image = np.asarray(image, dtype=np.float32) / 255.0
+
+            #读取depth
             depth_gt = np.load(depth_path)
             depth_gt = np.expand_dims(depth_gt, axis=2)
+
             # print("depth_gt", depth_gt.shape)
-            print(image.shape, depth_gt.shape)
+            # print(image.shape, depth_gt.shape)
+            #图片太大需要裁剪
+            #数据增强
             image, depth_gt = self.train_preprocess(image, depth_gt)
             image, depth_gt = self.Cut_Flip(image, depth_gt)
+
             sample = {'image': image, 'depth': depth_gt, 'focal': focal}
 
         else:
@@ -125,6 +129,7 @@ class DataLoadPreprocess(Dataset):
 
                 if has_valid_depth:
                     depth_gt = np.expand_dims(depth_gt, axis=2)
+                    #评价时同样需要裁剪
 
             if self.mode == 'online_eval':
                 sample = {'image': image, 'depth': depth_gt, 'focal': focal}
@@ -215,7 +220,6 @@ class DataLoadPreprocess(Dataset):
     def __len__(self):
         return len(self.filenames)
 
-
 class ToTensor(object):
     def __init__(self, mode):
         self.mode = mode
@@ -226,8 +230,6 @@ class ToTensor(object):
         image, focal = sample['image'], sample['focal']
         image = self.to_tensor(image)
         image = self.normalize(image)
-
-
 
         if self.mode == 'test':
             return {'image': image, 'focal': focal}
@@ -272,6 +274,3 @@ class ToTensor(object):
             return img.float()
         else:
             return img
-
-
-

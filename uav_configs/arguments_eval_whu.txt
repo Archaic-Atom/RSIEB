@@ -1,6 +1,6 @@
---model_name whu_omvs
+--model_name whu_newcfrs
 --encoder large07
---dataset whu_omvs
+--dataset whu_newcrfs
 --input_height 384
 --input_width 768
 --min_depth 175
@@ -8,9 +8,9 @@
 
 --data_path_eval /data1/zhouhongwei/depth_datasets
 --gt_path_eval /data1/zhouhongwei/depth_datasets
---filenames_file_eval uav_data_splits/whu_med_valid_list.txt
+--filenames_file_eval uav_data_splits/whu_med_testing_list.txt
 --min_depth_eval 1e-3
 --max_depth_eval 350
 
 
---checkpoint_path /data1/zhouhongwei/exper/models/1205/iebins_whu_omvs/model-38400-best_abs_rel_0.02146
+--checkpoint_path /data1/zhouhongwei/exper/models/newcrfs/1219/whu_newcrfs/model-57000-best_abs_rel_0.01768

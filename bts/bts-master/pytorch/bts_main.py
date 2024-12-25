@@ -17,6 +17,7 @@
 import time
 import argparse
 import datetime
+from datetime import datetime
 import sys
 import os
 
@@ -36,7 +37,7 @@ import threading
 from tqdm import tqdm
 
 from bts import BtsModel
-from whu_dataloader import *
+from wild_dataloader import *
 
 
 def convert_arg_line_to_args(arg_line):
@@ -138,7 +139,7 @@ inv_normalize = transforms.Normalize(
     std=[1/0.229, 1/0.224, 1/0.225]
 )
 
-eval_metrics = ['silog', 'abs_rel', 'log10', 'rms', 'sq_rel', 'log_rms', 'd1', 'd2', 'd3']
+eval_metrics = ['silog', 'abs_rel', 'log10', 'rms', 'sq_rel', 'log_rms', 'd1', 'd2', 'd3','d1_new','d2_new','d3_new']
 
 
 def compute_errors(gt, pred):
@@ -147,20 +148,17 @@ def compute_errors(gt, pred):
     d2 = (thresh < 1.25 ** 2).mean()
     d3 = (thresh < 1.25 ** 3).mean()
 
+    d1_new=(thresh<1.025).mean()
+    d2_new=(thresh<1.025 ** 2).mean()
+    d3_new=(thresh<1.025 ** 3).mean()
+
     rms = (gt - pred) ** 2
 
     rms = np.sqrt(rms.mean())
-    print("--rms:",rms)
 
     log_rms = (np.log(gt) - np.log(pred)) ** 2
-    print("gt---",(np.log(gt)).mean())
-    print("pred--",np.log(pred).mean())
-    # print("--logrms:",log_rms.mean())
     log_rms = np.sqrt(log_rms.mean())
-    print("--logrms:",log_rms)
 
-    print("abs",np.mean(np.abs(gt-pred)))
-    print("gtt",np.mean(gt))
     abs_rel = np.mean(np.abs(gt - pred) / gt)
     sq_rel = np.mean(((gt - pred) ** 2) / gt)
 
@@ -170,7 +168,7 @@ def compute_errors(gt, pred):
     err = np.abs(np.log10(pred) - np.log10(gt))
     log10 = np.mean(err)
 
-    return [silog, abs_rel, log10, rms, sq_rel, log_rms, d1, d2, d3]
+    return [silog, abs_rel, log10, rms, sq_rel, log_rms, d1, d2, d3,d1_new,d2_new,d3_new]
 
 
 def block_print():
@@ -256,7 +254,7 @@ def set_misc(model):
 
 
 def online_eval(model, dataloader_eval, gpu, ngpus):
-    eval_measures = torch.zeros(10).cuda(device=gpu)
+    eval_measures = torch.zeros(13).cuda(device=gpu)
     for _, eval_sample_batched in enumerate(tqdm(dataloader_eval.data)):
         with torch.no_grad():
             image = torch.autograd.Variable(eval_sample_batched['image'].cuda(gpu, non_blocking=True))
@@ -280,23 +278,23 @@ def online_eval(model, dataloader_eval, gpu, ngpus):
 
         valid_mask = np.logical_and(gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval)
 
-        if args.garg_crop or args.eigen_crop:
-            gt_height, gt_width = gt_depth.shape
-            eval_mask = np.zeros(valid_mask.shape)
-
-            if args.garg_crop:
-                eval_mask[int(0.40810811 * gt_height):int(0.99189189 * gt_height), int(0.03594771 * gt_width):int(0.96405229 * gt_width)] = 1
-
-            elif args.eigen_crop:
-                    eval_mask[int(0.3324324 * gt_height):int(0.91351351 * gt_height), int(0.0359477 * gt_width):int(0.96405229 * gt_width)] = 1
-
-            valid_mask = np.logical_and(valid_mask, eval_mask)
+        # if args.garg_crop or args.eigen_crop:
+        #     gt_height, gt_width = gt_depth.shape
+        #     eval_mask = np.zeros(valid_mask.shape)
+        #
+        #     if args.garg_crop:
+        #         eval_mask[int(0.40810811 * gt_height):int(0.99189189 * gt_height), int(0.03594771 * gt_width):int(0.96405229 * gt_width)] = 1
+        #
+        #     elif args.eigen_crop:
+        #             eval_mask[int(0.3324324 * gt_height):int(0.91351351 * gt_height), int(0.0359477 * gt_width):int(0.96405229 * gt_width)] = 1
+        #
+        #     valid_mask = np.logical_and(valid_mask, eval_mask)
 
 
         measures = compute_errors(gt_depth[valid_mask], pred_depth[valid_mask])
 
-        eval_measures[:9] += torch.tensor(measures).cuda(device=gpu)
-        eval_measures[9] += 1
+        eval_measures[:12] += torch.tensor(measures).cuda(device=gpu)
+        eval_measures[12] += 1
 
     if args.multiprocessing_distributed:
         group = dist.new_group([i for i in range(ngpus)])
@@ -304,15 +302,15 @@ def online_eval(model, dataloader_eval, gpu, ngpus):
 
     if not args.multiprocessing_distributed or gpu == 0:
         eval_measures_cpu = eval_measures.cpu()
-        cnt = eval_measures_cpu[9].item()
+        cnt = eval_measures_cpu[12].item()
         eval_measures_cpu /= cnt
         print('Computing errors for {} eval samples'.format(int(cnt)))
-        print("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}".format('silog', 'abs_rel', 'log10', 'rms',
+        print("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, , {:>7}, {:>7}, {:>7}".format('silog', 'abs_rel', 'log10', 'rms',
                                                                                      'sq_rel', 'log_rms', 'd1', 'd2',
-                                                                                     'd3'))
-        for i in range(8):
+                                                                                     'd3','d1_new','d2_new','d3_new'))
+        for i in range(11):
             print('{:7.3f}, '.format(eval_measures_cpu[i]), end='')
-        print('{:7.3f}'.format(eval_measures_cpu[8]))
+        print('{:7.3f}'.format(eval_measures_cpu[11]))
         return eval_measures_cpu
 
     return None
@@ -460,9 +458,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
             if not args.multiprocessing_distributed or (args.multiprocessing_distributed and args.rank % ngpus_per_node == 0):
                 print('[epoch][s/s_per_e/gs]: [{}][{}/{}/{}], lr: {:.12f}, loss: {:.12f}'.format(epoch, step, steps_per_epoch, global_step, current_lr, loss))
-                if np.isnan(loss.cpu().item()):
-                    print('NaN in loss occurred. Aborting training.')
-                    return -1
+                # if np.isnan(loss.cpu().item()):
+                #     print('NaN in loss occurred. Aborting training.')
+                #     return -1
 
             duration += time.time() - before_op_time
             if global_step and global_step % args.log_freq == 0 and not model_just_loaded:
@@ -495,6 +493,8 @@ def main_worker(gpu, ngpus_per_node, args):
                     writer.flush()
 
             if not args.do_online_eval and global_step and global_step % args.save_freq == 0:
+
+
                 if not args.multiprocessing_distributed or (args.multiprocessing_distributed and args.rank % ngpus_per_node == 0):
                     checkpoint = {'global_step': global_step,
                                   'model': model.state_dict(),
@@ -506,6 +506,17 @@ def main_worker(gpu, ngpus_per_node, args):
                 model.eval()
                 eval_measures = online_eval(model, dataloader_eval, gpu, ngpus_per_node)
                 if eval_measures is not None:
+                    exp_name = '%s' % (datetime.now().strftime('%m%d'))
+                    log_txt = os.path.join(args.log_directory + '/' + args.model_name, exp_name + '_logs.txt')
+                    with open(log_txt, 'a') as txtfile:
+                        txtfile.write(
+                            ">>>>>>>>>>>>>>>>>>>>>>>>>Step:%d>>>>>>>>>>>>>>>>>>>>>>>>>\n" % (int(global_step)))
+                        txtfile.write("{:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7}, {:>7},{:>7}, {:>7}, {:>7}\n".format('silog','abs_rel','log10','rms','sq_rel','log_rms','d1','d2','d3','d1_new','d2_new','d3_new'))
+                        txtfile.write("depth estimation\n")
+                        line = ''
+                        for i in range(12):
+                            line += '{:7.4f}, '.format(eval_measures[i])
+                        txtfile.write(line + '\n')  # 356-367额外添加
                     for i in range(9):
                         eval_summary_writer.add_scalar(eval_metrics[i], eval_measures[i].cpu(), int(global_step))
                         measure = eval_measures[i]
